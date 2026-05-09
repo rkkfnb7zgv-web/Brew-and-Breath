@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Cup and Calm</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #e6f4f5;
+    color: #1f3439;
+    max-width: 540px;
+    margin: 0 auto;
+    padding-bottom: 90px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    background: #cfe6e8;
+    padding: 24px 20px 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1ba8b1;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 2;
+  }
+  header p {
+    font-size: 13px;
+    color: #5a7378;
+    position: relative;
+    z-index: 2;
+  }
+  .balloon {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    font-size: 32px;
+    z-index: 1;
+  }
+  .sun {
+    position: absolute;
+    top: 14px;
+    right: 22px;
+    font-size: 28px;
+    z-index: 1;
+  }
+
+  /* Card */
+  .card {
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    margin-top: -20px;
+    padding: 22px 14px;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.05);
+    min-height: 70vh;
+  }
+
+  .card-title {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    margin-bottom: 14px;
+  }
+  .month-label {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .arrow-btn {
+    background: none;
+    border: none;
+    color: #1ba8b1;
+    font-size: 26px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .arrow-btn:disabled { color: #c0d0d3; }
+
+  /* Calendar grid */
+  .weekdays, .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  .weekdays {
+    margin-bottom: 6px;
+  }
+  .weekday {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #5a7378;
+    padding: 4px 0;
+  }
+  .calendar { gap: 6px 4px; }
+
+  .day-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+  }
+  .day-cell.empty { visibility: hidden; }
+  .day-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: #5a7378;
+    margin-bottom: 3px;
+  }
+  .day-cell.today .day-num { color: #1ba8b1; }
+  .day-cell.future .day-num { color: #b0c0c4; }
+
+  .day-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1.5px solid #e0ecee;
+    background: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+  .day-cell.today .day-circle { border-color: #1ba8b1; border-width: 2px; }
+  .day-cell.future .day-circle { border-style: dashed; opacity: 0.5; }
+
+  .half {
+    position: absolute;
+    left: 0; right: 0; height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .half.top { top: 0; }
+  .half.bot { bottom: 0; }
+
+  .coffee-good { background: #fce4b3; color: #b88515; }
+  .coffee-over { background: #d97757; color: #fff; }
+  .medit-yes { background: #c8e2d0; color: #2f6643; }
+
+  /* Legend */
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 18px 8px 4px;
+    margin-top: 14px;
+    border-top: 1px solid #e0ecee;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #5a7378;
+    font-weight: 600;
+  }
+  .legend-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .legend-dot.empty {
+    border: 1.5px solid #e0ecee;
+  }
+
+  /* Tabs */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    background: #fff;
+    border-top: 1px solid #e0ecee;
+    display: flex;
+    z-index: 50;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: #9bafb3;
+    cursor: pointer;
+    border-top: 2px solid transparent;
+  }
+  .tab-btn.active {
+    color: #1ba8b1;
+    border-top-color: #1ba8b1;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Results */
+  .results { padding: 24px 18px; }
+  .results h2 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+  .since {
+    text-align: center;
+    color: #5a7378;
+    font-size: 13px;
+    margin-bottom: 22px;
+  }
+
+  .stat-row {
+    background: #fff;
+    border: 1px solid #e0ecee;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .stat-num {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .stat-num.good { color: #1ba8b1; }
+  .stat-num.over { color: #f5b942; }
+  .stat-num.zen { color: #5fa775; }
+  .stat-label {
+    font-size: 12px;
+    color: #5a7378;
+    margin-top: 3px;
+  }
+
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .mini-card {
+    background: #fff;
+    border: 1px solid #e0ecee;
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .mini-card .num {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .mini-card.coffee .num { color: #1ba8b1; }
+  .mini-card.medit .num { color: #5fa775; }
+  .mini-card .lbl {
+    font-size: 11px;
+    color: #5a7378;
+    margin-top: 5px;
+    font-weight: 600;
+  }
+  .mini-card .best {
+    font-size: 10px;
+    color: #9bafb3;
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .section-h {
+    font-size: 11px;
+    font-weight: 700;
+    color: #5a7378;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 22px 0 10px;
+  }
+
+  /* Settings */
+  .settings { padding: 24px 18px; }
+  .settings h2 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 22px;
+  }
+  .setting-card {
+    background: #fff;
+    border: 1px solid #e0ecee;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .setting-card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .setting-card p {
+    font-size: 12px;
+    color: #5a7378;
+    margin-bottom: 12px;
+  }
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #e7f4f5;
+    padding: 6px;
+    border-radius: 12px;
+  }
+  .step-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    color: #1ba8b1;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .step-val {
+    flex: 1;
+    text-align: center;
+    font-weight: 800;
+    font-size: 20px;
+    color: #1ba8b1;
+  }
+  .step-val small {
+    font-size: 12px;
+    color: #5a7378;
+    font-weight: 600;
+    margin-left: 3px;
+  }
+
+  .data-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .btn {
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px solid #e0ecee;
+    background: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #1f3439;
+  }
+  .btn.primary {
+    background: #1ba8b1;
+    color: #fff;
+    border-color: #1ba8b1;
+  }
+  .btn.danger {
+    color: #d97757;
+    border-color: #d97757;
+  }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 18px;
+    padding: 22px 20px;
+  }
+  .modal h2 {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .modal-day {
+    margin-bottom: 16px;
+  }
+  .modal-day .dow {
+    display: block;
+    font-size: 18px;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+  .modal-day .date {
+    font-size: 12px;
+    color: #5a7378;
+    font-weight: 600;
+  }
+
+  .field {
+    background: #e7f4f5;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .field .lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: #5a7378;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  .field .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .field .num {
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .field.coffee .num { color: #f5b942; }
+  .field.medit .num { color: #5fa775; }
+  .field .num small {
+    font-size: 11px;
+    color: #5a7378;
+    font-weight: 600;
+    margin-left: 2px;
+  }
+  .pm-pair { display: flex; gap: 6px; }
+  .pm-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .quick-mins {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .quick-min {
+    background: #fff;
+    border: 1px solid #c8e2d0;
+    color: #5fa775;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .modal-actions .btn { flex: 1; padding: 11px; }
+</style>
+</head>
+<body>
+
+<div class="panel active" id="panel-home">
+  <header>
+    <span class="balloon">🎈</span>
+    <span class="sun">☀️</span>
+    <h1>Cup &amp; Calm</h1>
+    <p>Tap any day to log</p>
+  </header>
+
+  <div class="card">
+    <div class="card-title" id="cardTitle">Your month</div>
+
+    <div class="month-nav">
+      <button class="arrow-btn" id="prevMonth">‹</button>
+      <span class="month-label" id="monthLabel">—</span>
+      <button class="arrow-btn" id="nextMonth">›</button>
+    </div>
+
+    <div class="weekdays">
+      <div class="weekday">Mon</div>
+      <div class="weekday">Tue</div>
+      <div class="weekday">Wed</div>
+      <div class="weekday">Thu</div>
+      <div class="weekday">Fri</div>
+      <div class="weekday">Sat</div>
+      <div class="weekday">Sun</div>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot coffee-good">☕</div>
+        <span>On goal (≤<span id="legendGoal">1</span>)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot coffee-over">☕</div>
+        <span>Over goal</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot medit-yes">🧘</div>
+        <span>Meditated <span id="legendThresh">10</span>m+</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot empty">·</div>
+        <span>Not yet</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-results">
+  <div class="results">
+    <h2>My Results</h2>
+    <div class="since" id="sinceLabel">No entries yet</div>
+
+    <div class="section-h">All-time totals</div>
+
+    <div class="stat-row">
+      <div class="stat-icon coffee-good">☕</div>
+      <div>
+        <div class="stat-num good" id="totalOnGoal">0</div>
+        <div class="stat-label">days on goal</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-icon coffee-over">☕</div>
+      <div>
+        <div class="stat-num over" id="totalOver">0</div>
+        <div class="stat-label">days over goal · <span id="totalCoffees">0</span> coffees total</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-icon medit-yes">🧘</div>
+      <div>
+        <div class="stat-num zen" id="totalMeditMins">0</div>
+        <div class="stat-label">minutes meditated · <span id="totalMeditDays">0</span> days</div>
+      </div>
+    </div>
+
+    <div class="section-h">Streaks</div>
+    <div class="pair">
+      <div class="mini-card coffee">
+        <div class="num" id="streakCoffee">0</div>
+        <div class="lbl">days at goal</div>
+        <div class="best">Best · <span id="streakCoffeeBest">0</span></div>
+      </div>
+      <div class="mini-card medit">
+        <div class="num" id="streakMedit">0</div>
+        <div class="lbl">days meditating</div>
+        <div class="best">Best · <span id="streakMeditBest">0</span></div>
+      </div>
+    </div>
+
+    <div class="section-h">This month</div>
+    <div class="pair">
+      <div class="mini-card coffee">
+        <div class="num" id="monthCoffees">0</div>
+        <div class="lbl">coffees</div>
+      </div>
+      <div class="mini-card medit">
+        <div class="num" id="monthMedit">0</div>
+        <div class="lbl">meditation min</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-settings">
+  <div class="settings">
+    <h2>Settings</h2>
+
+    <div class="setting-card">
+      <h3>Daily coffee limit</h3>
+      <p>Days at or under this count keep your streak alive.</p>
+      <div class="stepper">
+        <button class="step-btn" id="goalDown">−</button>
+        <div class="step-val"><span id="goalVal">1</span><small>per day</small></div>
+        <button class="step-btn" id="goalUp">+</button>
+      </div>
+    </div>
+
+    <div class="setting-card">
+      <h3>Meditation streak threshold</h3>
+      <p>Minimum minutes for a day to count.</p>
+      <div class="stepper">
+        <button class="step-btn" id="threshDown">−</button>
+        <div class="step-val"><span id="threshVal">10</span><small>min</small></div>
+        <button class="step-btn" id="threshUp">+</button>
+      </div>
+    </div>
+
+    <div class="section-h">Data</div>
+    <div class="data-btns">
+      <button class="btn" id="exportBtn">Export data</button>
+      <button class="btn" id="importBtn">Import data</button>
+      <button class="btn danger" id="resetBtn">Reset everything</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+
+    <p style="text-align:center; color:#9bafb3; font-size:11px; margin-top:20px;">
+      All data lives on this device only.
+    </p>
+  </div>
+</div>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="home">📅 Calendar</button>
+  <button class="tab-btn" data-tab="results">📊 Results</button>
+  <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
+</nav>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>Log this day</h2>
+    <div class="modal-day">
+      <span class="dow" id="modalDow">—</span>
+      <span class="date" id="modalDate">—</span>
+    </div>
+
+    <div class="field coffee">
+      <div class="lbl">☕ Coffees</div>
+      <div class="row">
+        <div class="num"><span id="cVal">0</span></div>
+        <div class="pm-pair">
+          <button class="pm-btn" id="cMinus">−</button>
+          <button class="pm-btn" id="cPlus">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field medit">
+      <div class="lbl">🧘 Meditation</div>
+      <div class="row">
+        <div class="num"><span id="mVal">0</span><small>min</small></div>
+        <div class="pm-pair">
+          <button class="pm-btn" id="mMinus">−</button>
+          <button class="pm-btn" id="mPlus">+</button>
+        </div>
+      </div>
+      <div class="quick-mins">
+        <button class="quick-min" data-add="5">+5</button>
+        <button class="quick-min" data-add="10">+10</button>
+        <button class="quick-min" data-add="15">+15</button>
+        <button class="quick-min" data-add="20">+20</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">Cancel</button>
+      <button class="btn primary" id="modalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var STORE_KEY = 'cupAndCalmV1';
+  var defaultStore = {
+    settings: { coffeeGoal: 1, meditThreshold: 10 },
+    days: {}
+  };
+
+  function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return deepClone(defaultStore);
+      var p = JSON.parse(raw);
+      var settings = { coffeeGoal: 1, meditThreshold: 10 };
+      if (p.settings) {
+        if (typeof p.settings.coffeeGoal === 'number') settings.coffeeGoal = p.settings.coffeeGoal;
+        if (typeof p.settings.meditThreshold === 'number') settings.meditThreshold = p.settings.meditThreshold;
+      }
+      return { settings: settings, days: p.days || {} };
+    } catch (e) {
+      return deepClone(defaultStore);
+    }
+  }
+
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var state = load();
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function keyFromDate(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function todayKey() { return keyFromDate(new Date()); }
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var dowNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  function getDay(key) { return state.days[key] || { c: 0, m: 0 }; }
+  function setDay(key, c, m) {
+    if (c === 0 && m === 0) {
+      delete state.days[key];
+    } else {
+      state.days[key] = { c: c, m: m };
+    }
+    save();
+  }
+
+  function dayStatus(key) {
+    var goal = state.settings.coffeeGoal;
+    var thresh = state.settings.meditThreshold;
+    var day = state.days[key];
+    var isFuture = key > todayKey();
+    if (isFuture) return { future: true };
+    var c = day ? day.c : 1;
+    var m = day ? day.m : 0;
+    return {
+      coffeeOver: c > goal,
+      meditOK: m >= thresh,
+      coffees: c,
+      medit: m
+    };
+  }
+
+  function computeStats() {
+    var goal = state.settings.coffeeGoal;
+    var thresh = state.settings.meditThreshold;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    var coffeeCur = 0, meditCur = 0, i, d, day, c, m;
+    for (i = 0; i < 10000; i++) {
+      d = new Date(today);
+      d.setDate(today.getDate() - i);
+      day = state.days[keyFromDate(d)];
+      c = day ? day.c : 1;
+      if (c <= goal) coffeeCur++; else break;
+    }
+    for (i = 0; i < 10000; i++) {
+      d = new Date(today);
+      d.setDate(today.getDate() - i);
+      day = state.days[keyFromDate(d)];
+      m = day ? day.m : 0;
+      if (m >= thresh) meditCur++; else break;
+    }
+
+    var keys = [];
+    for (var k in state.days) { if (state.days.hasOwnProperty(k)) keys.push(k); }
+    keys.sort();
+
+    var totalOnGoal = 0, totalOver = 0, totalCoffees = 0;
+    var totalMeditMins = 0, totalMeditDays = 0;
+    var coffeeBest = coffeeCur, meditBest = meditCur;
+
+    if (keys.length) {
+      var start = new Date(keys[0]);
+      var cRun = 0, mRun = 0;
+      for (var dt = new Date(start); dt <= today; dt.setDate(dt.getDate() + 1)) {
+        var key = keyFromDate(dt);
+        var dayObj = state.days[key];
+        c = dayObj ? dayObj.c : 1;
+        m = dayObj ? dayObj.m : 0;
+        totalCoffees += c;
+        if (c <= goal) totalOnGoal++; else totalOver++;
+        if (m > 0) { totalMeditMins += m; totalMeditDays++; }
+        if (c <= goal) { cRun++; if (cRun > coffeeBest) coffeeBest = cRun; } else cRun = 0;
+        if (m >= thresh) { mRun++; if (mRun > meditBest) meditBest = mRun; } else mRun = 0;
+      }
+    }
+
+    return {
+      coffeeCur: coffeeCur, meditCur: meditCur,
+      coffeeBest: coffeeBest, meditBest: meditBest,
+      totalOnGoal: totalOnGoal, totalOver: totalOver, totalCoffees: totalCoffees,
+      totalMeditMins: totalMeditMins, totalMeditDays: totalMeditDays,
+      firstDayKey: keys.length ? keys[0] : null
+    };
+  }
+
+  var nowDate = new Date();
+  var viewMonth = { y: nowDate.getFullYear(), m: nowDate.getMonth() };
+
+  function renderCalendar() {
+    var y = viewMonth.y, m = viewMonth.m;
+    document.getElementById('monthLabel').textContent = monthNames[m] + ' ' + y;
+    document.getElementById('legendGoal').textContent = state.settings.coffeeGoal;
+    document.getElementById('legendThresh').textContent = state.settings.meditThreshold;
+
+    var now = new Date();
+    document.getElementById('nextMonth').disabled =
+      (y === now.getFullYear() && m === now.getMonth());
+
+    var cal = document.getElementById('calendar');
+    cal.innerHTML = '';
+
+    var first = new Date(y, m, 1);
+    var daysInMonth = new Date(y, m + 1, 0).getDate();
+    var firstDow = (first.getDay() + 6) % 7;
+
+    for (var i = 0; i < firstDow; i++) {
+      var blank = document.createElement('div');
+      blank.className = 'day-cell empty';
+      cal.appendChild(blank);
+    }
+
+    for (var d = 1; d <= daysInMonth; d++) {
+      (function(dayNum) {
+        var dt = new Date(y, m, dayNum);
+        var key = keyFromDate(dt);
+        var status = dayStatus(key);
+        var isToday = (key === todayKey());
+
+        var cell = document.createElement('div');
+        cell.className = 'day-cell' + (isToday ? ' today' : '') + (status.future ? ' future' : '');
+
+        var num = document.createElement('div');
+        num.className = 'day-num';
+        num.textContent = dayNum;
+        cell.appendChild(num);
+
+        var circle = document.createElement('div');
+        circle.className = 'day-circle';
+
+        if (!status.future) {
+          var top = document.createElement('div');
+          top.className = 'half top ' + (status.coffeeOver ? 'coffee-over' : 'coffee-good');
+          top.textContent = '☕';
+          circle.appendChild(top);
+
+          if (status.meditOK) {
+            var bot = document.createElement('div');
+            bot.className = 'half bot medit-yes';
+            bot.textContent = '🧘';
+            circle.appendChild(bot);
+          }
+        }
+
+        cell.appendChild(circle);
+
+        if (!status.future) {
+          cell.addEventListener('click', function() { openModal(key); });
+        }
+        cal.appendChild(cell);
+      })(d);
+    }
+  }
+
+  function renderResults() {
+    var s = computeStats();
+    document.getElementById('totalOnGoal').textContent = s.totalOnGoal;
+    document.getElementById('totalOver').textContent = s.totalOver;
+    document.getElementById('totalCoffees').textContent = s.totalCoffees;
+    document.getElementById('totalMeditMins').textContent = s.totalMeditMins;
+    document.getElementById('totalMeditDays').textContent = s.totalMeditDays;
+    document.getElementById('streakCoffee').textContent = s.coffeeCur;
+    document.getElementById('streakMedit').textContent = s.meditCur;
+    document.getElementById('streakCoffeeBest').textContent = s.coffeeBest;
+    document.getElementById('streakMeditBest').textContent = s.meditBest;
+
+    var since = document.getElementById('sinceLabel');
+    if (s.firstDayKey) {
+      var dt = new Date(s.firstDayKey);
+      since.textContent = 'Since ' + dt.getDate() + ' ' + monthNames[dt.getMonth()] + ' ' + dt.getFullYear();
+    } else {
+      since.textContent = 'Tap a day on the calendar to start';
+    }
+
+    var n = new Date();
+    var mc = 0, mm = 0;
+    for (var d = 1; d <= n.getDate(); d++) {
+      var key = keyFromDate(new Date(n.getFullYear(), n.getMonth(), d));
+      var day = state.days[key];
+      mc += day ? day.c : 1;
+      mm += day ? day.m : 0;
+    }
+    document.getElementById('monthCoffees').textContent = mc;
+    document.getElementById('monthMedit').textContent = mm;
+  }
+
+  function renderSettings() {
+    document.getElementById('goalVal').textContent = state.settings.coffeeGoal;
+    document.getElementById('threshVal').textContent = state.settings.meditThreshold;
+  }
+
+  // Modal
+  var modalKey = null, mC = 0, mM = 0;
+
+  function openModal(key) {
+    modalKey = key;
+    var day = getDay(key);
+    mC = day.c > 0 ? day.c : 1;
+    mM = day.m;
+    document.getElementById('cVal').textContent = mC;
+    document.getElementById('mVal').textContent = mM;
+    var dt = new Date(key);
+    document.getElementById('modalDow').textContent = dowNames[dt.getDay()];
+    document.getElementById('modalDate').textContent =
+      dt.getDate() + ' ' + monthNames[dt.getMonth()] + ' ' + dt.getFullYear();
+    document.getElementById('modalBg').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalBg').classList.remove('open');
+    modalKey = null;
+  }
+
+  document.getElementById('cMinus').onclick = function() {
+    mC = Math.max(0, mC - 1);
+    document.getElementById('cVal').textContent = mC;
+  };
+  document.getElementById('cPlus').onclick = function() {
+    mC = Math.min(99, mC + 1);
+    document.getElementById('cVal').textContent = mC;
+  };
+  document.getElementById('mMinus').onclick = function() {
+    mM = Math.max(0, mM - 5);
+    document.getElementById('mVal').textContent = mM;
+  };
+  document.getElementById('mPlus').onclick = function() {
+    mM = Math.min(600, mM + 5);
+    document.getElementById('mVal').textContent = mM;
+  };
+
+  var quickMins = document.querySelectorAll('.quick-min');
+  for (var i = 0; i < quickMins.length; i++) {
+    (function(btn) {
+      btn.onclick = function() {
+        mM = Math.min(600, mM + parseInt(btn.getAttribute('data-add'), 10));
+        document.getElementById('mVal').textContent = mM;
+      };
+    })(quickMins[i]);
+  }
+
+  document.getElementById('modalCancel').onclick = closeModal;
+  document.getElementById('modalSave').onclick = function() {
+    setDay(modalKey, mC, mM);
+    closeModal();
+    renderCalendar();
+    renderResults();
+  };
+  document.getElementById('modalBg').addEventListener('click', function(e) {
+    if (e.target.id === 'modalBg') closeModal();
+  });
+
+  // Month nav
+  document.getElementById('prevMonth').onclick = function() {
+    viewMonth.m--;
+    if (viewMonth.m < 0) { viewMonth.m = 11; viewMonth.y--; }
+    renderCalendar();
+  };
+  document.getElementById('nextMonth').onclick = function() {
+    var now = new Date();
+    if (viewMonth.y === now.getFullYear() && viewMonth.m === now.getMonth()) return;
+    viewMonth.m++;
+    if (viewMonth.m > 11) { viewMonth.m = 0; viewMonth.y++; }
+    renderCalendar();
+  };
+
+  // Tabs
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  for (var j = 0; j < tabBtns.length; j++) {
+    (function(btn) {
+      btn.onclick = function() {
+        for (var k = 0; k < tabBtns.length; k++) tabBtns[k].classList.remove('active');
+        var panels = document.querySelectorAll('.panel');
+        for (var k = 0; k < panels.length; k++) panels[k].classList.remove('active');
+        btn.classList.add('active');
+        var tab = btn.getAttribute('data-tab');
+        document.getElementById('panel-' + tab).classList.add('active');
+        if (tab === 'home') renderCalendar();
+        if (tab === 'results') renderResults();
+        if (tab === 'settings') renderSettings();
+        window.scrollTo(0, 0);
+      };
+    })(tabBtns[j]);
+  }
+
+  // Settings
+  document.getElementById('goalDown').onclick = function() {
+    state.settings.coffeeGoal = Math.max(0, state.settings.coffeeGoal - 1);
+    save(); renderSettings(); renderCalendar();
+  };
+  document.getElementById('goalUp').onclick = function() {
+    state.settings.coffeeGoal = Math.min(20, state.settings.coffeeGoal + 1);
+    save(); renderSettings(); renderCalendar();
+  };
+  document.getElementById('threshDown').onclick = function() {
+    state.settings.meditThreshold = Math.max(1, state.settings.meditThreshold - 5);
+    save(); renderSettings(); renderCalendar();
+  };
+  document.getElementById('threshUp').onclick = function() {
+    state.settings.meditThreshold = Math.min(120, state.settings.meditThreshold + 5);
+    save(); renderSettings(); renderCalendar();
+  };
+
+  // Data
+  document.getElementById('exportBtn').onclick = function() {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'cup-and-calm-' + todayKey() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  document.getElementById('importBtn').onclick = function() {
+    document.getElementById('importFile').click();
+  };
+  document.getElementById('importFile').onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var r = new FileReader();
+    r.onload = function(ev) {
+      try {
+        var p = JSON.parse(ev.target.result);
+        if (!p.days) { alert('Could not read that file.'); return; }
+        var settings = { coffeeGoal: 1, meditThreshold: 10 };
+        if (p.settings) {
+          if (typeof p.settings.coffeeGoal === 'number') settings.coffeeGoal = p.settings.coffeeGoal;
+          if (typeof p.settings.meditThreshold === 'number') settings.meditThreshold = p.settings.meditThreshold;
+        }
+        state = { settings: settings, days: p.days };
+        save();
+        renderCalendar();
+        renderSettings();
+        renderResults();
+        alert('Imported.');
+      } catch (err) {
+        alert('Could not read that file.');
+      }
+    };
+    r.readAsText(file);
+  };
+  document.getElementById('resetBtn').onclick = function() {
+    if (confirm('Erase everything? This cannot be undone.')) {
+      state = deepClone(defaultStore);
+      save();
+      renderCalendar();
+      renderSettings();
+      renderResults();
+    }
+  };
+
+  renderCalendar();
+  renderSettings();
+  renderResults();
+})();
+</script>
+</body>
+</html>
